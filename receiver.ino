@@ -1,9 +1,9 @@
 #include <WiFi.h>
 
-const char* ssid = "@owais";
-const char* password = "Owais@2412";
-
-WiFiServer server(80);
+const char* ssid = "SSID";
+const char* password = "PASSWORD";
+const char* host = "192.168.xx.xx"; // Replace with the server's IP address
+const uint16_t port = 80;
 
 void setup() {
   Serial.begin(115200);
@@ -18,25 +18,41 @@ void setup() {
 
   Serial.println("Connected to WiFi");
   Serial.println(WiFi.localIP());
-  
-  server.begin();
 }
 
 void loop() {
-  WiFiClient client = server.available();   // Listen for incoming clients
+  Serial.print("Connecting to ");
+  Serial.print(host);
+  Serial.print(':');
+  Serial.println(port);
 
-  if (client) {
-    Serial.println("New Client Connected");
-    while (client.connected()) {
-      if (client.available()) {
-        String msg = client.readStringUntil('\n');
-        Serial.print("Received: ");
-        Serial.println(msg);
-        
-        client.println("Message received"); // Send response to client
-      }
-    }
-    client.stop();
-    Serial.println("Client Disconnected");
+  WiFiClient client;
+
+  if (!client.connect(host, port)) {
+    Serial.println("Connection to host failed");
+    delay(2000);
+    return;
   }
+
+  Serial.println("Connected to server");
+  
+  // Send data to the server
+  String message = "Hello from ESP32 Client";
+  client.println(message);
+  Serial.print("Sent: ");
+  Serial.println(message);
+
+  // Wait for a response from the server
+  while (client.connected() && !client.available()) {
+    delay(10);
+  }
+  
+  String response = client.readStringUntil('\n');
+  Serial.print("Received: ");
+  Serial.println(response);
+
+  client.stop();
+  Serial.println("Disconnected from server");
+
+  delay(5000); // Send a message every 5 seconds
 }
